@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { AllExceptionsFilter } from './all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -16,6 +17,8 @@ async function bootstrap() {
     credentials: false,
   });
 
+  app.useGlobalFilters(new AllExceptionsFilter());
+  
   // 정적 서빙: /uploads/* → /app/uploads 의 파일을 GET으로 제공
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
 
