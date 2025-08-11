@@ -1,10 +1,17 @@
 # --- build stage ---
 FROM node:22-slim AS builder
 WORKDIR /app
+
+# 필수 패키지(OpenSSL 포함) 설치
+RUN apt-get update -y && apt-get install -y openssl
+
 COPY package*.json ./
 RUN npm ci
+
 COPY prisma ./prisma
-RUN npx prisma generate
+# Prisma Client를 native + debian-openssl-3.0.x 대상으로 생성
+RUN npx prisma generate --schema=prisma/schema.prisma
+
 COPY . .
 RUN npm run build
 
@@ -12,10 +19,14 @@ RUN npm run build
 FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
+
+# OpenSSL 설치 (Prisma 실행 필수)
+RUN apt-get update -y && apt-get install -y openssl
+
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Prisma 클라이언트와 관련 파일 전부 복사
+# Prisma 관련 디렉토리 전부 복사
 COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client /app/node_modules/@prisma/client
@@ -23,6 +34,7 @@ COPY --from=builder /app/node_modules/@prisma/client /app/node_modules/@prisma/c
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/dist ./dist
 
+# 엔트리포인트
 COPY <<'EOF' /app/entrypoint.sh
 #!/usr/bin/env bash
 set -e
