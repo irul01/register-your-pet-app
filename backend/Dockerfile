@@ -1,5 +1,5 @@
 # --- build stage ---
-FROM node:22-slim AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 
 # 필수 패키지(OpenSSL 포함) 설치
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # --- runtime stage ---
-FROM node:22-slim
+FROM node:20-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
