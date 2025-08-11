@@ -1,4 +1,3 @@
-# backend/Dockerfile
 # --- build stage ---
 FROM node:22-slim AS builder
 WORKDIR /app
@@ -15,13 +14,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev
-# Prisma 관련 파일/클라이언트
+
+# Prisma 클라이언트와 관련 파일 전부 복사
+COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client /app/node_modules/@prisma/client
+
 COPY --from=builder /app/prisma ./prisma
-# 빌드 결과
 COPY --from=builder /app/dist ./dist
 
-# 시작 스크립트: 마이그레이션 → 앱 시작
 COPY <<'EOF' /app/entrypoint.sh
 #!/usr/bin/env bash
 set -e
