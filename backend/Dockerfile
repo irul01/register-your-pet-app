@@ -34,6 +34,9 @@ COPY --from=builder /app/node_modules/@prisma/client /app/node_modules/@prisma/c
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/dist ./dist
 
+# ✅ 업로드 디렉토리 미리 생성
+RUN mkdir -p /app/uploads
+
 # 엔트리포인트
 COPY <<'EOF' /app/entrypoint.sh
 #!/usr/bin/env bash
