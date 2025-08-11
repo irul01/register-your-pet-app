@@ -7,14 +7,15 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // ✅ CORS 허용 추가
-  app.enableCors();
-
-  // ✅ 업로드된 이미지 접근을 위해 정적 폴더 공개
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
+  app.enableCors({
+    origin: [
+      'http://localhost:5173', // 프론트
+    ],
+    credentials: false,
   });
-  
+
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

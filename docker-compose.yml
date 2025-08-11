@@ -1,4 +1,3 @@
-# pet-registration-app/docker-compose.yml
 version: '3.8'
 services:
   db:
@@ -9,22 +8,31 @@ services:
       POSTGRES_USER: petuser
       POSTGRES_PASSWORD: petpass
       POSTGRES_DB: petdb
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     volumes:
       - db_data:/var/lib/postgresql/data
 
   backend:
     build: ./backend
     container_name: nest-backend
-    ports:
-      - "3000:3000"
+    ports: ["3000:3000"]
     volumes:
       - ./backend:/app
-    depends_on:
-      - db
+      - ./backend/uploads:/app/uploads
+    depends_on: [db]
     environment:
       DATABASE_URL: "postgresql://petuser:petpass@db:5432/petdb?schema=public"
+
+  frontend:
+    build:
+      context: ./frontend/pet-registration-frontend     # ✅ Vite 루트
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:3000        # ✅ 빌드 타임 주입
+    container_name: vite-frontend
+    ports:
+      - "5173:80"                                       # http://localhost:5173
+    depends_on: [backend]
 
 volumes:
   db_data:
