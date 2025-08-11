@@ -50,28 +50,37 @@ const RegistrationForm = () => {
   };
 
   // 서명 이미지 업로드: POST /files (multipart/form-data)
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    try {
-      setUploading(true);
-      setPreviewUrl(URL.createObjectURL(file)); // 미리보기(선택)
+  try {
+    setUploading(true);
+    setPreviewUrl(URL.createObjectURL(file));
 
-      const fd = new FormData();
-      fd.append("file", file);
+    const fd = new FormData();
+    fd.append("file", file);
 
-      // ⚠️ Content-Type을 직접 지정하지 말 것
-      const res = await api.post<UploadResponse>("/files", fd);
-      setForm((prev) => ({ ...prev, signaturePath: res.data.path })); // "/uploads/xxx.png"
-      alert("서명 이미지 업로드 성공");
-    } catch (err: any) {
-      console.error("이미지 업로드 실패:", err.response?.data || err.message);
-      alert("이미지 업로드 실패: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
+    // ✅ 업로드는 절대 URL로 강제 → 프론트 도메인으로 안 샙니다
+    const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+    if (!API_BASE) {
+      console.error("VITE_API_BASE_URL is empty in build. Upload will fail (goes to frontend).");
+      alert("서버 설정 오류: VITE_API_BASE_URL이 설정되지 않았습니다.");
+      return;
     }
-  };
+    const url = `${API_BASE}/files`;
+
+    // 절대 URL을 쓰면 axios의 baseURL은 무시되고, 무조건 백엔드로 갑니다
+    const res = await api.post<{ path: string }>(url, fd);
+    setForm((prev) => ({ ...prev, signaturePath: res.data.path }));
+    alert("서명 이미지 업로드 성공");
+  } catch (err: any) {
+    console.error("이미지 업로드 실패:", err.response?.data || err.message);
+    alert("이미지 업로드 실패: " + (err.response?.data?.message || err.message));
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

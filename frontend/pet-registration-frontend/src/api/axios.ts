@@ -4,15 +4,14 @@ import axios from 'axios';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL, // 빈 문자열이면 현재 오리진으로 감(= 프론트 도메인)
   timeout: 10000,
 });
 
-// 프로덕션에서 값이 없으면 빌드 시점에 실패하도록(선택)
+// 배포에서 값 없으면 경고
 if (import.meta.env.PROD && !API_BASE_URL) {
   // eslint-disable-next-line no-console
-  console.warn('VITE_API_BASE_URL is not set for production build.');
+  console.warn('VITE_API_BASE_URL is NOT set. Requests will go to the frontend origin.');
 }
 
-export default api;   // ✅ default export 추가
-export { api };       // (원하면 동시에 named도 유지)
+export default api;
