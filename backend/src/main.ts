@@ -12,8 +12,8 @@ async function bootstrap() {
   const origins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) ?? [];
   app.enableCors({
     origin: origins.length ? origins : false, // 처음엔 *도 가능하지만 도메인 지정 권장
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    //methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    //allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false,
   });
 
