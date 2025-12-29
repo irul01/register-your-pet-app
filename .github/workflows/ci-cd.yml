@@ -1,0 +1,91 @@
+name: CI/CD
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+  push:
+    branches: [ main ]
+
+env:
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/register-your-pet-app
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          npm ci
+          npm run build
+          npm run lint || true
+
+      - name: Build frontend
+        working-directory: ./frontend/pet-registration-frontend
+        run: |
+          npm ci
+          npm run build
+
+  publish-and-deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: test-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: |
+            ${{ env.GHCR_IMAGE }}:backend-${{ github.sha }}
+            ${{ env.GHCR_IMAGE }}:backend-latest
+          context: ./backend
+          file: ./backend/Dockerfile
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: |
+            ${{ env.GHCR_IMAGE }}:frontend-${{ github.sha }}
+            ${{ env.GHCR_IMAGE }}:frontend-latest
+          context: ./frontend/pet-registration-frontend
+          file: ./frontend/pet-registration-frontend/Dockerfile
+
+      - name: Conditional Cloud Run deploy
+        if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+        env:
+          CLOUD_RUN_SERVICE: register-your-pet
+        run: |
+          echo "$GCP_SERVICE_ACCOUNT_KEY" > /tmp/gcloud-key.json
+          echo "Setting up gcloud..."
+          curl -sSL https://sdk.cloud.google.com | bash > /dev/null
+          # Add gcloud to PATH for current session
+          export PATH="$HOME/google-cloud-sdk/bin:$PATH"
+          gcloud auth activate-service-account --key-file=/tmp/gcloud-key.json
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud run deploy $CLOUD_RUN_SERVICE \
+            --image=${{ env.GHCR_IMAGE }}:backend-latest \
+            --region=${{ secrets.GCP_REGION }} \
+            --platform=managed \
+            --set-env-vars GCP_UPLOADS_BUCKET=${{ secrets.GCP_UPLOADS_BUCKET }} \
+            --quiet

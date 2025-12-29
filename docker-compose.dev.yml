@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: petuser
+      POSTGRES_PASSWORD: petpass
+      POSTGRES_DB: petdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: nest-backend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - ./backend/uploads:/app/uploads
+    depends_on: [db]
+    environment:
+      DATABASE_URL: "postgresql://petuser:petpass@db:5432/petdb?schema=public"
+    command: npm run start:dev
+
+  frontend:
+    build:
+      context: ./frontend/pet-registration-frontend
+      dockerfile: Dockerfile
+    container_name: vite-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/pet-registration-frontend:/app
+      - /app/node_modules
+    environment:
+      # In dev, browser runs on host; point to host backend
+      VITE_API_BASE_URL: http://localhost:3000
+    command: npm run dev
+    depends_on: [backend]
+
+volumes:
+  db_data:
