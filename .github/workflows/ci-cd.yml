@@ -83,4 +83,9 @@ jobs:
           export PATH="$HOME/google-cloud-sdk/bin:$PATH"
           gcloud auth activate-service-account --key-file=/tmp/gcloud-key.json
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud run deploy $CLOUD_RUN_SERVICE --image=${{ env.GHCR_IMAGE }}:backend-latest --region=${{ secrets.GCP_REGION }} --platform=managed --quiet
+          gcloud run deploy $CLOUD_RUN_SERVICE \
+            --image=${{ env.GHCR_IMAGE }}:backend-latest \
+            --region=${{ secrets.GCP_REGION }} \
+            --platform=managed \
+            --set-env-vars GCP_UPLOADS_BUCKET=${{ secrets.GCP_UPLOADS_BUCKET }} \
+            --quiet
