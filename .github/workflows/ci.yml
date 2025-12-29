@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          npm ci
+          npm run build
+          npm run lint || true
+
+      - name: Build frontend
+        working-directory: ./frontend/pet-registration-frontend
+        run: |
+          npm ci
+          npm run build
