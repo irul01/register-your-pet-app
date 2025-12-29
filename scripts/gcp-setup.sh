@@ -34,8 +34,13 @@ echo "3) Set project"
 gcloud config set project "$PROJECT_ID"
 
 echo "4) Enable required APIs"
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com \ 
-  artifactregistry.googleapis.com iam.googleapis.com storage.googleapis.com cloudsqladmin.googleapis.com || true
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  iam.googleapis.com \
+  storage.googleapis.com \
+  sqladmin.googleapis.com || true
 
 echo "5) Create service account (if not exists)"
 if gcloud iam service-accounts describe "$SA_EMAIL" --project "$PROJECT_ID" >/dev/null 2>&1; then
