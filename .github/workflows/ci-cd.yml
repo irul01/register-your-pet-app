@@ -93,6 +93,12 @@ jobs:
           docker tag ${{ env.GHCR_IMAGE }}:backend-latest ${{ env.GAR_IMAGE }}:backend-latest
           docker push ${{ env.GAR_IMAGE }}:backend-latest
 
+      - name: Tag and push frontend image to Artifact Registry
+        run: |
+          docker pull ${{ env.GHCR_IMAGE }}:frontend-latest
+          docker tag ${{ env.GHCR_IMAGE }}:frontend-latest ${{ env.GAR_IMAGE }}:frontend-latest
+          docker push ${{ env.GAR_IMAGE }}:frontend-latest
+
       - name: Deploy to Cloud Run
         env:
           CLOUD_RUN_SERVICE: register-your-pet
