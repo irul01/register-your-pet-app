@@ -71,21 +71,27 @@ jobs:
           context: ./frontend/pet-registration-frontend
           file: ./frontend/pet-registration-frontend/Dockerfile
 
-      - name: Conditional Cloud Run deploy
-        if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+      - name: Conditional Cloud Run auth
+        if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' && secrets.GCP_PROJECT_ID != '' && secrets.GCP_REGION != '' && secrets.GCP_UPLOADS_BUCKET != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      
+      - name: Set up Cloud SDK
+        if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' && secrets.GCP_PROJECT_ID != '' && secrets.GCP_REGION != '' && secrets.GCP_UPLOADS_BUCKET != '' }}
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to Cloud Run
+        if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' && secrets.GCP_PROJECT_ID != '' && secrets.GCP_REGION != '' && secrets.GCP_UPLOADS_BUCKET != '' }}
         env:
           CLOUD_RUN_SERVICE: register-your-pet
         run: |
-          echo "$GCP_SERVICE_ACCOUNT_KEY" > /tmp/gcloud-key.json
-          echo "Setting up gcloud..."
-          curl -sSL https://sdk.cloud.google.com | bash > /dev/null
-          # Add gcloud to PATH for current session
-          export PATH="$HOME/google-cloud-sdk/bin:$PATH"
-          gcloud auth activate-service-account --key-file=/tmp/gcloud-key.json
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud run deploy $CLOUD_RUN_SERVICE \
             --image=${{ env.GHCR_IMAGE }}:backend-latest \
             --region=${{ secrets.GCP_REGION }} \
             --platform=managed \
             --set-env-vars GCP_UPLOADS_BUCKET=${{ secrets.GCP_UPLOADS_BUCKET }} \
+            --allow-unauthenticated \
             --quiet
