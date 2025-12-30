@@ -19,16 +19,21 @@ services:
     volumes:
       - ./backend:/app
       - ./backend/uploads:/app/uploads
+      # GCS 업로드를 로컬에서 실사용하려면 서비스 계정 키를 마운트하세요.
+      - ./register-your-pet-deployer-key.json:/secrets/gcp-key.json:ro
     depends_on: [db]
     environment:
       DATABASE_URL: "postgresql://petuser:petpass@db:5432/petdb?schema=public"
+      USE_GCS_UPLOADS: "false" # 개발 기본값: 로컬 uploads 디렉터리 사용
+      # 로컬에서 GCS 업로드까지 테스트하려면 아래 값을 채우고 USE_GCS_UPLOADS를 true로 변경
+      # GCP_UPLOADS_BUCKET: "register-your-pet-uploads-439221755886"
+      # GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp-key.json
     command: npm run start:dev
 
   frontend:
-    build:
-      context: ./frontend/pet-registration-frontend
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: vite-frontend-dev
+    working_dir: /app
     ports:
       - "5173:5173"
     volumes:
@@ -37,7 +42,7 @@ services:
     environment:
       # In dev, browser runs on host; point to host backend
       VITE_API_BASE_URL: http://localhost:3000
-    command: npm run dev
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     depends_on: [backend]
 
 volumes:

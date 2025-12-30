@@ -19,6 +19,10 @@ export class CreateRegistrationDto {
 
   @IsString()
   @IsNotEmpty()
+  animalRegistrationNumber: string; // 동물등록번호
+
+  @IsString()
+  @IsNotEmpty()
   animalName: string; // 동물이름
 
   @IsString()
@@ -41,9 +45,9 @@ export class CreateRegistrationDto {
   @IsNotEmpty()
   birthDate: string; // 출생일 (YYYY-MM-DD)
 
+  @IsOptional()
   @IsDateString()
-  @IsNotEmpty()
-  acquisitionDate: string; // 취득일 (YYYY-MM-DD)
+  acquisitionDate?: string; // 취득일 (선택)
 
   @IsOptional()
   @IsString()

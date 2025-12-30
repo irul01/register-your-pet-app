@@ -20,13 +20,14 @@ model Registration {
   residentNo     String   // 주민등록번호
   phoneNumber    String   // 전화번호
   address        String   // 주소
+  animalRegistrationNumber String   // 동물등록번호
   animalName     String   // 동물이름
   breed          String   // 품종
   furColor       String   // 털 색깔
   gender         String   // 성별 ("암" 또는 "수")
   neutering      String   // 중성화 ("여" 또는 "부")
   birthDate      DateTime // 출생일 (YYYY-MM-DD)
-  acquisitionDate DateTime // 취득일 (YYYY-MM-DD)
+  acquisitionDate DateTime? // 취득일 (선택)
   specialNotes   String?  // 특이사항 (선택 입력)
   applicationDate DateTime // 신청일 (YYYY-MM-DD)
   signaturePath  String   // 서명 (파일 경로)

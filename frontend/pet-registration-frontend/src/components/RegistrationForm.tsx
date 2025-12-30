@@ -7,6 +7,7 @@ interface FormData {
   residentNo: string;
   phoneNumber: string;
   address: string;
+  animalRegistrationNumber: string;
   animalName: string;
   breed: string;
   furColor: string;
@@ -25,6 +26,7 @@ const RegistrationForm: React.FC = () => {
     residentNo: "",
     phoneNumber: "",
     address: "",
+    animalRegistrationNumber: "",
     animalName: "",
     breed: "",
     furColor: "",
@@ -39,6 +41,31 @@ const RegistrationForm: React.FC = () => {
 
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const fillDummy = () => {
+    const today = new Date();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const birth = new Date(today);
+    birth.setFullYear(birth.getFullYear() - 3);
+
+    setForm((prev) => ({
+      ...prev,
+      guardianName: "홍길동",
+      residentNo: "800101-1234567",
+      phoneNumber: "010-1234-5678",
+      address: "서울특별시 중구 세종대로 110",
+      animalRegistrationNumber: "410-12-3456789",
+      animalName: "콩이",
+      breed: "믹스견",
+      furColor: "갈색",
+      gender: "암",
+      neutering: "여",
+      birthDate: iso(birth),
+      acquisitionDate: iso(today),
+      specialNotes: "겁이 많아요",
+      applicationDate: iso(today),
+    }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target as HTMLInputElement & HTMLTextAreaElement & HTMLSelectElement;
@@ -71,9 +98,14 @@ const RegistrationForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/registrations", form);
+      const payload = {
+        ...form,
+        acquisitionDate: form.acquisitionDate || undefined,
+      };
+
+      await api.post("/registrations", payload);
       alert("등록 성공!");
-      await generatePdf(form);
+      await generatePdf(payload);
     } catch (err: any) {
       console.error(err);
       alert("등록 실패");
@@ -82,11 +114,19 @@ const RegistrationForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 space-y-4 bg-white shadow-md rounded-xl">
-      <h2 className="text-xl font-bold">애견 등록 신청서</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xl font-bold">애견 등록 신청서</h2>
+        {import.meta.env.DEV && (
+          <button type="button" onClick={fillDummy} className="text-sm px-3 py-2 rounded border border-gray-300 hover:bg-gray-100">
+            더미 데이터 채우기
+          </button>
+        )}
+      </div>
       <Input label="보호자 성명" name="guardianName" value={form.guardianName} onChange={handleChange} />
       <Input label="주민등록번호" name="residentNo" value={form.residentNo} onChange={handleChange} />
       <Input label="전화번호" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
       <Input label="주소" name="address" value={form.address} onChange={handleChange} />
+      <Input label="동물등록번호" name="animalRegistrationNumber" value={form.animalRegistrationNumber} onChange={handleChange} />
       <Input label="동물이름" name="animalName" value={form.animalName} onChange={handleChange} />
       <Input label="품종" name="breed" value={form.breed} onChange={handleChange} />
       <Input label="털 색깔" name="furColor" value={form.furColor} onChange={handleChange} />
@@ -95,7 +135,7 @@ const RegistrationForm: React.FC = () => {
       <Select label="중성화 여부" name="neutering" value={form.neutering} onChange={handleChange} options={["여", "부"]} />
 
       <Input label="출생일" name="birthDate" type="date" value={form.birthDate} onChange={handleChange} />
-      <Input label="취득일" name="acquisitionDate" type="date" value={form.acquisitionDate} onChange={handleChange} />
+  <Input label="취득일" name="acquisitionDate" type="date" value={form.acquisitionDate} onChange={handleChange} required={false} />
 
       <div>
         <label className="block text-sm font-medium">특이사항</label>
@@ -121,10 +161,10 @@ const RegistrationForm: React.FC = () => {
   );
 };
 
-const Input = ({ label, name, type = "text", value, onChange, accept }: { label: string; name: string; type?: string; value?: string; onChange: React.ChangeEventHandler<any>; accept?: string }) => (
+const Input = ({ label, name, type = "text", value, onChange, accept, required = true }: { label: string; name: string; type?: string; value?: string; onChange: React.ChangeEventHandler<any>; accept?: string; required?: boolean }) => (
   <div>
     <label className="block text-sm font-medium">{label}</label>
-    <input type={type} name={name} value={type !== "file" ? value : undefined} onChange={onChange} accept={accept} className="w-full border p-2 rounded" required={type !== "file"} />
+    <input type={type} name={name} value={type !== "file" ? value : undefined} onChange={onChange} accept={accept} className="w-full border p-2 rounded" required={required && type !== "file"} />
   </div>
 );
 

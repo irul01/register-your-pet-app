@@ -21,6 +21,7 @@ export class RegistrationService {
       residentNo,
       phoneNumber,
       address,
+      animalRegistrationNumber,
       animalName,
       breed,
       furColor,
@@ -43,13 +44,14 @@ export class RegistrationService {
           residentNo,
           phoneNumber,
           address,
+          animalRegistrationNumber,
           animalName,
           breed,
           furColor,
           gender,
           neutering,
           birthDate: new Date(birthDate),
-          acquisitionDate: new Date(acquisitionDate),
+          acquisitionDate: acquisitionDate ? new Date(acquisitionDate) : null,
           specialNotes,
           applicationDate: new Date(applicationDate),
           signaturePath,
@@ -59,25 +61,29 @@ export class RegistrationService {
         return mockRegistration;
       }
 
+      const data: any = {
+        guardianName,
+        residentNo,
+        phoneNumber,
+        address,
+        animalRegistrationNumber,
+        animalName,
+        breed,
+        furColor,
+        gender,
+        neutering,
+        birthDate: new Date(birthDate), // Date 형식으로 변환
+        specialNotes,
+        applicationDate: new Date(applicationDate), // Date 형식으로 변환
+        signaturePath,
+      };
+
+      if (acquisitionDate) {
+        data.acquisitionDate = new Date(acquisitionDate);
+      }
+
       // Prisma를 사용하여 DB에 등록
-      const registration = await this.prisma.registration.create({
-        data: {
-          guardianName,
-          residentNo,
-          phoneNumber,
-          address,
-          animalName,
-          breed,
-          furColor,
-          gender,
-          neutering,
-          birthDate: new Date(birthDate), // Date 형식으로 변환
-          acquisitionDate: new Date(acquisitionDate), // Date 형식으로 변환
-          specialNotes,
-          applicationDate: new Date(applicationDate), // Date 형식으로 변환
-          signaturePath,
-        },
-      });
+      const registration = await this.prisma.registration.create({ data });
 
       return registration;
     } catch (error) {

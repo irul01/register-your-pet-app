@@ -11,9 +11,14 @@ export class GcsService {
     // Use GOOGLE_APPLICATION_CREDENTIALS or the service account provided in the environment
     this.storage = new Storage();
     this.bucketName = process.env.GCP_UPLOADS_BUCKET || '';
-    if (!this.bucketName) {
+    const wantsGcs = process.env.USE_GCS_UPLOADS === 'true';
+    if (!this.bucketName && wantsGcs) {
       this.logger.warn('GCS uploads bucket not configured. Set GCP_UPLOADS_BUCKET env var.');
     }
+  }
+
+  isConfigured(): boolean {
+    return Boolean(this.bucketName);
   }
 
   async uploadBuffer(buffer: Buffer, destinationPath: string, contentType?: string) {

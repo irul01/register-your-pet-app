@@ -92,13 +92,14 @@ export async function generatePdf(record: any) {
     map(record.residentNo,       252, 842-235, 377-257, 235-217);   // 주민번호
     map(record.phoneNumber,      377, 842-235, 500-377, 235-217);   // 전화번호
     map(record.address,          127, 842-276, 360, 276-250);       // 주소
+    map(record.animalRegistrationNumber, 127, 485, 200, 404-382); // 동물등록번호
     map(record.animalName,       127, 842-404, 158-127, 404-382);   // 동물 이름
     map(record.breed,            158, 842-404, 192-158, 404-382);   // 품종
     map(record.furColor,         193, 842-404, 226-193, 404-382);   // 털색깔
     map(record.gender,           227, 842-404, 267-227, 404-382);   // 성별
     map(record.neutering,        268, 842-404, 302-268, 404-382);   // 중성화 여부
     map(fmtYMD(record.birthDate),        302, 842-404, 368-302, 404-382);         // 출생일
-    map(fmtYMD(record.acquisitionDate),  369, 842-404, 435-369, 404-382);         // 취득일
+    map(fmtYMD(record.acquisitionDate),  369, 842-404, 435-369, 404-382);         // 취득일 (optional)
     map(record.specialNotes,     436, 842-404, 58, 404-382);                          // 특이사항
     
     const ap = splitYMD(record.applicationDate); // 신청일
@@ -111,11 +112,13 @@ export async function generatePdf(record: any) {
     // ✍️ 서명 이미지 (배포 환경에서도 동작하도록 절대 URL로)
     if (record.signaturePath) {
       const imageUrl = resolveToAbsolute(record.signaturePath);
-      const imageBytes = await axios
-        .get(imageUrl, { responseType: 'arraybuffer' })
-        .then(res => res.data);
+      const imageRes = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      const imageBytes = imageRes.data;
+      const contentType = (imageRes.headers['content-type'] || '').toLowerCase();
+      const lowerPath = imageUrl.toLowerCase();
 
-      const signatureImage = await pdfDoc.embedPng(imageBytes);
+      const isJpg = contentType.includes('jpeg') || contentType.includes('jpg') || lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg');
+      const signatureImage = isJpg ? await pdfDoc.embedJpg(imageBytes) : await pdfDoc.embedPng(imageBytes);
       const maxHeight = 30;
       const scale = maxHeight / signatureImage.height;
       const dims = signatureImage.scale(scale);
