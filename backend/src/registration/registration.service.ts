@@ -5,7 +5,14 @@ import { CreateRegistrationDto } from './dto/create-registration.dto';
 
 @Injectable()
 export class RegistrationService {
+  private mockData: Record<number, any> = {}; // In-memory storage for demo
+  private idCounter = 1;
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private isDatabaseConnected(): boolean {
+    return !!process.env.DATABASE_URL;
+  }
 
   // Registration 생성
   async create(createRegistrationDto: CreateRegistrationDto) {
@@ -27,6 +34,31 @@ export class RegistrationService {
     } = createRegistrationDto;
 
     try {
+      // If no database, use mock storage
+      if (!this.isDatabaseConnected()) {
+        const id = this.idCounter++;
+        const mockRegistration = {
+          id,
+          guardianName,
+          residentNo,
+          phoneNumber,
+          address,
+          animalName,
+          breed,
+          furColor,
+          gender,
+          neutering,
+          birthDate: new Date(birthDate),
+          acquisitionDate: new Date(acquisitionDate),
+          specialNotes,
+          applicationDate: new Date(applicationDate),
+          signaturePath,
+          createdAt: new Date(),
+        };
+        this.mockData[id] = mockRegistration;
+        return mockRegistration;
+      }
+
       // Prisma를 사용하여 DB에 등록
       const registration = await this.prisma.registration.create({
         data: {
@@ -49,26 +81,42 @@ export class RegistrationService {
 
       return registration;
     } catch (error) {
-      throw new Error(`Registration creation failed: ${error.message}`);
+      throw new Error(`Registration creation failed: ${(error as Error).message}`);
     }
   }
 
   // 모든 Registration 조회
   async findAll() {
+    if (!this.isDatabaseConnected()) {
+      return Object.values(this.mockData);
+    }
     return await this.prisma.registration.findMany();
   }
 
   // 특정 Registration 조회
   async findOne(id: number) {
+    if (!this.isDatabaseConnected()) {
+      return this.mockData[id] || null;
+    }
     return await this.prisma.registration.findUnique({
       where: { id },
     });
   }
 
-
-// ...생략
+  // 페이징 조회
   async findAllPaginated({ page, take }: { page: number; take: number }) {
     const skip = (page - 1) * take;
+
+    if (!this.isDatabaseConnected()) {
+      const items = Object.values(this.mockData).slice(skip, skip + take);
+      const total = Object.keys(this.mockData).length;
+      return {
+        items,
+        total,
+        page,
+        totalPages: Math.ceil(total / take),
+      };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.registration.findMany({
@@ -85,6 +133,7 @@ export class RegistrationService {
       page,
       totalPages: Math.ceil(total / take),
     };
+  }
 }
 
 }
