@@ -9,6 +9,7 @@ on:
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/register-your-pet-app
+  GAR_IMAGE: asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/register-your-pet/register-your-pet-app
 
 jobs:
   test-build:
@@ -83,12 +84,21 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-northeast3-docker.pkg.dev
+
+      - name: Tag and push backend image to Artifact Registry
+        run: |
+          docker pull ${{ env.GHCR_IMAGE }}:backend-latest
+          docker tag ${{ env.GHCR_IMAGE }}:backend-latest ${{ env.GAR_IMAGE }}:backend-latest
+          docker push ${{ env.GAR_IMAGE }}:backend-latest
+
       - name: Deploy to Cloud Run
         env:
           CLOUD_RUN_SERVICE: register-your-pet
         run: |
           gcloud run deploy $CLOUD_RUN_SERVICE \
-            --image=${{ env.GHCR_IMAGE }}:backend-latest \
+            --image=${{ env.GAR_IMAGE }}:backend-latest \
             --region=${{ secrets.GCP_REGION }} \
             --platform=managed \
             --set-env-vars GCP_UPLOADS_BUCKET=${{ secrets.GCP_UPLOADS_BUCKET }} \
