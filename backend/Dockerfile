@@ -41,10 +41,15 @@ RUN mkdir -p /app/uploads
 COPY <<'EOF' /app/entrypoint.sh
 #!/usr/bin/env bash
 set -e
-npx prisma migrate deploy
+if [ -n "$DATABASE_URL" ]; then
+  echo "Running Prisma migrations..."
+  npx prisma migrate deploy
+else
+  echo "Skipping Prisma migrations (no DATABASE_URL)"
+fi
 node dist/main.js
 EOF
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 8080
 CMD ["/app/entrypoint.sh"]
