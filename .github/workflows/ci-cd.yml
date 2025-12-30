@@ -71,6 +71,8 @@ jobs:
           tags: |
             ${{ env.GHCR_IMAGE }}:frontend-${{ github.sha }}
             ${{ env.GHCR_IMAGE }}:frontend-latest
+          build-args: |
+            VITE_API_BASE_URL=https://register-your-pet-439221755886.asia-northeast3.run.app
           context: ./frontend/pet-registration-frontend
           file: ./frontend/pet-registration-frontend/Dockerfile
 
