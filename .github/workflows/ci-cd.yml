@@ -101,6 +101,19 @@ jobs:
             --image=${{ env.GAR_IMAGE }}:backend-latest \
             --region=${{ secrets.GCP_REGION }} \
             --platform=managed \
+            --port=8080 \
             --set-env-vars GCP_UPLOADS_BUCKET=${{ secrets.GCP_UPLOADS_BUCKET }} \
+            --allow-unauthenticated \
+            --quiet
+
+      - name: Deploy frontend to Cloud Run
+        env:
+          CLOUD_RUN_FRONTEND_SERVICE: register-your-pet-frontend
+        run: |
+          gcloud run deploy $CLOUD_RUN_FRONTEND_SERVICE \
+            --image=${{ env.GAR_IMAGE }}:frontend-latest \
+            --region=${{ secrets.GCP_REGION }} \
+            --platform=managed \
+            --port=80 \
             --allow-unauthenticated \
             --quiet
